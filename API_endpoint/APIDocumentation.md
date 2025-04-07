@@ -22,8 +22,8 @@ The SHL Assessment Recommender API analyzes job descriptions or queries to recom
 1. Clone the repository or create a new directory for your project:
 
 ```bash
-mkdir shl-recommender-api
-cd shl-recommender-api
+https://github.com/madhavc21/SHL_SearchEngine.git
+cd SHL_SearchEngine/API_endpoint
 ```
 
 2. Install the required dependencies:
@@ -34,7 +34,7 @@ pip install fastapi uvicorn[standard] pydantic google-generativeai beautifulsoup
 
 3. Save the `fastapi_endpoint.py` file in your project directory.
 
-4. Create a JSON file named `shl_solutions.json` in the same directory with your SHL assessment data. The file should have the following structure:
+4. Ensure the JSON file named `shl_solutions.json` in the same directory as the endpoint. This is file is created using scraper.py, and contains the scraper, structured database of SHL product catalogue. The file should have the following structure:
 
 ```json
 {
