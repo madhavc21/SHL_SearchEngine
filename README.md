@@ -29,8 +29,8 @@ This project implements an intelligent recommendation system to help hiring mana
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/shl-assessment-recommender.git
-   cd shl-assessment-recommender
+   https://github.com/madhavc21/SHL_SearchEngine.git
+   cd SHL_SearchEngine
    ```
 
 2. Install dependencies:
