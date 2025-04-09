@@ -6,6 +6,9 @@ from gemini_client import initialize_genai, process_query_with_gemini, determine
 from search_engine import search_assessments
 from utils import detect_url, scrape_job_description, SCHEMA_INFO
 
+#Set API key
+api_key = os.getenv("GEMINI_API_KEY")
+
 # Configure page
 st.set_page_config(
     page_title="SHL Assessment Recommender",
@@ -129,17 +132,6 @@ def main():
     # Sidebar for API configuration
     with st.sidebar:
         st.header("Configuration")
-        api_key = st.text_input("Enter Gemini API Key:", type="password", 
-                               help="Get your API key from https://ai.google.dev/")
-        
-        if api_key:
-            try:
-                initialize_genai(api_key=api_key)
-            except Exception as e:
-                st.error(f"Error initializing Gemini Client: {e}")
-        else:
-            st.warning("Please enter your Gemini API key to enable query processing.")
-        
         data_file = st.text_input(
             "Path to SHL solutions data:", 
             value="shl_solutions.json",
