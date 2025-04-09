@@ -1,4 +1,4 @@
-# api.py
+    # api.py
 
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,6 +10,9 @@ import re
 import requests
 from bs4 import BeautifulSoup
 import google.generativeai as genai
+
+# Set API key
+API_KEY = os.getenv("GEMINI_API_KEY")
 
 app = FastAPI(
     title="SHL Assessment Recommender API",
@@ -509,14 +512,12 @@ def process_complete_query(query: str, api_key: str):
 async def get_recommendations(
     query: str = Query(..., description="Natural language query or job description text/URL"),
     max_results: int = Query(10, ge=1, le=10, description="Maximum number of recommendations to return"),
-    api_key: str = Query(os.getenv("GEMINI_API_KEY"), description="Gemini API Key")
 ):
     """
     Get assessment recommendations based on a natural language query or job description.
     
     - **query**: Natural language query describing job requirements or URL to job description
     - **max_results**: Maximum number of recommendations to return (1-10)
-    - **api_key**: Gemini API Key for processing
     
     Returns lists of recommended individual assessments and pre-packaged solutions with relevance scores and extracted parameters.
     """
@@ -525,7 +526,7 @@ async def get_recommendations(
         data = load_data()
         
         # Process the query
-        extracted_info, dynamic_weights = process_complete_query(query, api_key)
+        extracted_info, dynamic_weights = process_complete_query(query, API_KEY)
         
         # Search for assessments
         individual_recommendations, pre_packaged_recommendations, _ = search_assessments(
