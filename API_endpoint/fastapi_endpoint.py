@@ -509,7 +509,7 @@ def process_complete_query(query: str, api_key: str):
 async def get_recommendations(
     query: str = Query(..., description="Natural language query or job description text/URL"),
     max_results: int = Query(10, ge=1, le=10, description="Maximum number of recommendations to return"),
-    api_key: str = Query(..., description="Gemini API Key")
+    api_key: str = Query(os.getenv("GEMINI_API_KEY"), description="Gemini API Key")
 ):
     """
     Get assessment recommendations based on a natural language query or job description.
