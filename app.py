@@ -269,7 +269,7 @@ def main():
                     else:
                         st.info("No matching pre-packaged solutions found.")
 
-                    with st.expander("Search details"):
+                    with st.expander("Search result details"):
                         # Display the extracted information
                         st.subheader("Query Analysis")
                         col1, col2 = st.columns(2)
