@@ -67,9 +67,7 @@ SCHEMA_INFO = {
 
 # Response model for recommendations
 class RecommendationResponse(BaseModel):
-    individual_recommendations: List[Dict[str, Any]]
-    pre_packaged_recommendations: List[Dict[str, Any]]
-    extracted_parameters: Dict[str, Any]
+    recommended_assessments: List[Dict[str, Any]]
 
 # Initialize Gemini API
 def initialize_genai(api_key: Optional[str] = None):
@@ -508,83 +506,56 @@ def process_complete_query(query: str, api_key: str):
     
     return extracted_info, dynamic_weights
 
-@app.get("/recommend", response_model=RecommendationResponse, tags=["recommendations"])
-async def get_recommendations(
-    query: str = Query(..., description="Natural language query or job description text/URL"),
-    max_results: int = Query(10, ge=1, le=10, description="Maximum number of recommendations to return"),
-):
+@app.post("/recommend", response_model=RecommendationResponse, tags=["recommendations"])
+async def get_recommendations(request: Dict[str, str]):
     """
-    Get assessment recommendations based on a natural language query or job description.
+    Get assessment recommendations based on a job description or natural language query.
     
-    - **query**: Natural language query describing job requirements or URL to job description
-    - **max_results**: Maximum number of recommendations to return (1-10)
+    Request body:
+    - **query**: Job description or natural language query describing job requirements
     
-    Returns lists of recommended individual assessments and pre-packaged solutions with relevance scores and extracted parameters.
+    Returns a list of recommended assessments with details including URL, description, 
+    duration, test type, and support for remote and adaptive testing.
     """
+    query = request.get("query")
+    if not query:
+        raise HTTPException(status_code=400, detail="Query parameter is required")
+    
     try:
         # Load data
         data = load_data()
         
         # Process the query
-        extracted_info, dynamic_weights = process_complete_query(query, API_KEY)
+        extracted_info, dynamic_weights = process_complete_query(query, api_key)
         
         # Search for assessments
         individual_recommendations, pre_packaged_recommendations, _ = search_assessments(
             data,
             extracted_info,
             dynamic_weights,
-            max_results=max_results
+            max_results=10
         )
         
-        # Prepare output for individual tests
-        clean_individual_recommendations = []
-        for rec in individual_recommendations:
-            # Remove score details and other unnecessary fields for API response
-            clean_rec = {
-                "name": rec.get("name", ""),
-                "url": rec.get("url", ""),
-                "description": rec.get("description", ""),
-                "remote_testing": rec.get("remote_testing", False),
-                "adaptive_irt": rec.get("adaptive_irt", False),
-                "duration": rec.get("duration", ""),
-                "test_type": rec.get("test_type", ""),
-                "relevance_score": round(rec.get("relevance_score", 0), 2)
-            }
-            clean_individual_recommendations.append(clean_rec)
+        combined_recommendations = []
+        seen_urls = set()
         
-        # Prepare output for pre-packaged solutions
-        clean_pre_packaged_recommendations = []
-        for rec in pre_packaged_recommendations:
-            # Remove score details and other unnecessary fields for API response
-            clean_rec = {
-                "name": rec.get("name", ""),
-                "url": rec.get("url", ""),
-                "description": rec.get("description", ""),
-                "remote_testing": rec.get("remote_testing", False),
-                "adaptive_irt": rec.get("adaptive_irt", False),
-                "duration": rec.get("duration", ""),
-                "test_type": rec.get("test_type", ""),
-                "relevance_score": round(rec.get("relevance_score", 0), 2)
-            }
-            clean_pre_packaged_recommendations.append(clean_rec)
+        for rec in individual_recommendations + pre_packaged_recommendations:
+            url = rec.get("url", "")
+            if url and url not in seen_urls:
+                seen_urls.add(url)
+                combined_recommendations.append({
+                    "url": url,
+                    "adaptive_support": "Yes" if rec.get("adaptive_irt", False) else "No",
+                    "description": rec.get("description", ""),
+                    "duration": int(float(rec.get("duration", 0))) if rec.get("duration") else 0,
+                    "remote_support": "Yes" if rec.get("remote_testing", False) else "No",
+                    "test_type": rec.get("test_type_descriptions", [])
+                })
         
-        # Clean extracted parameters
-        clean_params = {
-            "job_levels": extracted_info.get("job_levels", []),
-            "skills": extracted_info.get("skills", []),
-            "duration": extracted_info.get("duration"),
-            "remote_testing": extracted_info.get("remote_testing"),
-            "adaptive_irt": extracted_info.get("adaptive_irt"),
-            "test_types": extracted_info.get("test_types", []),
-            "languages": extracted_info.get("languages", []),
-            "extracted_url": extracted_info.get("extracted_url")
-        }
+        # Respect max_results limit (10)
+        combined_recommendations = combined_recommendations[:10]
         
-        return {
-            "individual_recommendations": clean_individual_recommendations,
-            "pre_packaged_recommendations": clean_pre_packaged_recommendations,
-            "extracted_parameters": clean_params
-        }
+        return {"recommended_assessments": combined_recommendations}
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing recommendation: {str(e)}")
@@ -594,9 +565,9 @@ async def health_check():
     """
     Simple health check endpoint.
     
-    Returns a status message indicating the API is running.
+    Returns a status message indicating if the API is healthy.
     """
-    return {"status": "ok", "message": "API is running"}
+    return {"status": "healthy"}
 
 if __name__ == "__main__":
     import uvicorn
