@@ -526,7 +526,7 @@ async def get_recommendations(request: Dict[str, str]):
         data = load_data()
         
         # Process the query
-        extracted_info, dynamic_weights = process_complete_query(query, api_key)
+        extracted_info, dynamic_weights = process_complete_query(query, API_KEY)
         
         # Search for assessments
         individual_recommendations, pre_packaged_recommendations, _ = search_assessments(
